@@ -28,10 +28,11 @@ Folio does one thing: open a `.md` file, let you edit it as formatted text, and 
 - **One window per file**. Double-click `.md` in Finder to open it.
 - **Detailed customization**: themes and palettes, any installed font for text, headings and code, sizes and spacing, list bullets, Markdown output style.
 - **English and Russian** interface.
+- **Auto-update** from GitHub Releases: Folio checks on launch, or via *Folio → Check for Updates…*.
 
 ## Install
 
-1. Download `Folio_1.1.1_aarch64.dmg` from [Releases](https://github.com/shineexxx/folio/releases/latest).
+1. Download `Folio_<version>_aarch64.dmg` from [Releases](https://github.com/shineexxx/folio/releases/latest).
 2. Open it and drag **Folio** to **Applications**.
 3. On first launch Folio offers to become your default Markdown editor. You can also change this later in **Settings → General**.
 
@@ -83,15 +84,13 @@ Dev pages without Tauri (after `npm run dev`):
 
 ### Release (signed and notarized)
 
+Bump the version in `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `package.json`, then:
+
 ```bash
-export APPLE_API_KEY=<key id> APPLE_API_ISSUER=<issuer id>
-export APPLE_API_KEY_PATH=~/.appstoreconnect/private_keys/AuthKey_<key id>.p8
-npx tauri build --bundles app,dmg      # signs, notarizes and staples the app
-DMG=src-tauri/target/release/bundle/dmg/Folio_<version>_aarch64.dmg
-xcrun notarytool submit "$DMG" --key "$APPLE_API_KEY_PATH" --key-id "$APPLE_API_KEY" --issuer "$APPLE_API_ISSUER" --wait
-xcrun stapler staple "$DMG"
-gh release create v<version> "$DMG"
+APPLE_API_KEY=<key id> APPLE_API_ISSUER=<issuer id> scripts/release.sh notes.md
 ```
+
+The script builds and signs the app, notarizes the app and the DMG, signs the update archive with the updater key from `~/.tauri/folio-updater.key`, writes `latest.json` and publishes everything to GitHub Releases. Installed copies pick the update up from `latest.json`.
 
 ## Project layout
 
@@ -101,6 +100,8 @@ gh release create v<version> "$DMG"
 | `src-tauri/src/menu.rs` | native menu in English and Russian |
 | `src-tauri/src/settings.rs` | settings storage and broadcast to all windows, installed fonts list |
 | `src-tauri/src/default_app.rs` | making Folio the default Markdown app (Launch Services) |
+| `src-tauri/src/updater.rs` | auto-update from GitHub Releases |
+| `scripts/release.sh` | build, notarize and publish a release |
 | `src/editor.ts` | Milkdown Crepe setup, `/` menu, Markdown output style, image fix |
 | `src/main.ts` | document window: loading, autosave, frontmatter, source mode, images |
 | `src/settings.ts`, `src/palettes.ts` | settings defaults and applying them as CSS variables |

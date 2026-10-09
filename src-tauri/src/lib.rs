@@ -13,6 +13,7 @@ use tauri_plugin_dialog::DialogExt;
 mod default_app;
 mod menu;
 mod settings;
+mod updater;
 
 use settings::SettingsState;
 
@@ -26,6 +27,8 @@ struct Windows {
     paths: Mutex<HashMap<String, Option<PathBuf>>>,
     counter: AtomicUsize,
     quitting: AtomicBool,
+    /// Relaunch once every window has closed (after installing an update).
+    restart: AtomicBool,
 }
 
 // ---------- file commands ----------
@@ -107,6 +110,7 @@ fn set_window_path(window: WebviewWindow, state: tauri::State<Windows>, path: St
 #[tauri::command]
 fn cancel_quit(state: tauri::State<Windows>) {
     state.quitting.store(false, Ordering::SeqCst);
+    state.restart.store(false, Ordering::SeqCst);
 }
 
 // ---------- windows ----------
@@ -211,14 +215,20 @@ fn focused_window(app: &AppHandle) -> Option<WebviewWindow> {
         .find(|w| w.is_focused().unwrap_or(false))
 }
 
-/// Close every window through its normal close flow (which saves), then exit.
-fn quit(app: &AppHandle) {
+/// Close every window through its normal close flow (which saves), then exit
+/// or, with `restart`, relaunch.
+pub(crate) fn quit(app: &AppHandle, restart: bool) {
     let windows = app.webview_windows();
     if windows.is_empty() {
+        if restart {
+            app.restart();
+        }
         app.exit(0);
         return;
     }
-    app.state::<Windows>().quitting.store(true, Ordering::SeqCst);
+    let state = app.state::<Windows>();
+    state.restart.store(restart, Ordering::SeqCst);
+    state.quitting.store(true, Ordering::SeqCst);
     for window in windows.values() {
         let _ = window.close();
     }
@@ -237,6 +247,7 @@ fn md_paths_from_args() -> Vec<PathBuf> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(Windows::default())
         .setup(|app| {
             let handle = app.handle();
@@ -249,7 +260,8 @@ pub fn run() {
             "new" => open_document(app, None),
             "settings" => open_settings(app),
             "open" => pick_and_open(app),
-            "quit" => quit(app),
+            "quit" => quit(app, false),
+            "check-updates" => updater::check(app, true),
             id @ ("save" | "save-as" | "reveal" | "source") => {
                 if let Some(window) = focused_window(app) {
                     let _ = app.emit_to(EventTarget::webview_window(window.label()), "menu", id);
@@ -263,6 +275,9 @@ pub fn run() {
                 let state = app.state::<Windows>();
                 state.paths.lock().unwrap().remove(window.label());
                 if state.quitting.load(Ordering::SeqCst) && app.webview_windows().is_empty() {
+                    if state.restart.load(Ordering::SeqCst) {
+                        app.restart();
+                    }
                     app.exit(0);
                 }
             }
@@ -298,7 +313,15 @@ pub fn run() {
                         if h.webview_windows().keys().all(|l| l == SETTINGS_LABEL) {
                             open_document(&h, None);
                         }
+
                     });
+                });
+                // Check for updates a bit later, so it doesn't compete with opening files
+                // or the first-launch "default editor" question.
+                let handle = app.clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(Duration::from_secs(5));
+                    updater::check(&handle, false);
                 });
             }
             #[cfg(any(target_os = "macos", target_os = "ios"))]

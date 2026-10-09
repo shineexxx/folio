@@ -7,6 +7,22 @@ pub fn tr(lang: &str, key: &str) -> &'static str {
     match key {
         "about" => if ru { "О программе Folio" } else { "About Folio" },
         "settings" => if ru { "Настройки…" } else { "Settings…" },
+        "check-updates" => if ru { "Проверить обновления…" } else { "Check for Updates…" },
+        "update-available" => if ru {
+            "Доступна новая версия Folio {new} (у вас {old}). Установить?"
+        } else {
+            "Folio {new} is available (you have {old}). Install it now?"
+        },
+        "update-install" => if ru { "Установить" } else { "Install" },
+        "update-later" => if ru { "Позже" } else { "Later" },
+        "update-ready" => if ru {
+            "Обновление установлено. Перезапустить Folio сейчас? Открытые документы сохранятся."
+        } else {
+            "The update is installed. Restart Folio now? Open documents will be saved."
+        },
+        "update-restart" => if ru { "Перезапустить" } else { "Restart" },
+        "update-none" => if ru { "У вас последняя версия Folio ({v})." } else { "You're up to date: Folio {v}." },
+        "update-error" => if ru { "Не удалось проверить обновления:" } else { "Couldn't check for updates:" },
         "settings-title" => if ru { "Настройки" } else { "Settings" },
         "hide" => if ru { "Скрыть Folio" } else { "Hide Folio" },
         "hide-others" => if ru { "Скрыть остальные" } else { "Hide Others" },
@@ -49,6 +65,8 @@ fn build(app: &AppHandle, lang: &str) -> tauri::Result<Menu<Wry>> {
 
     let app_menu = SubmenuBuilder::new(app, "Folio")
         .item(&PredefinedMenuItem::about(app, Some(t("about")), None)?)
+        .separator()
+        .item(&item("check-updates", "check-updates", None)?)
         .separator()
         .item(&item("settings", "settings", Some("CmdOrCtrl+,"))?)
         .separator()

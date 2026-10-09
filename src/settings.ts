@@ -12,6 +12,7 @@ export const DEFAULTS = {
   autosaveDelay: 400, // ms
   assetsDir: "assets",
   linkOpen: "cmd" as "cmd" | "click",
+  autoUpdate: true,
   askedDefault: false, // first-launch "make default editor?" prompt shown
 
   // Appearance

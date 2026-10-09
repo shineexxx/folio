@@ -55,6 +55,7 @@ const SECTIONS: Section[] = [
       { key: "assetsDir", type: "text", hint: "assetsDirHint" },
       { key: "linkOpen", type: "select", options: [["cmd", "linkCmd"], ["click", "linkClick"]] },
       { key: "askedDefault", label: "defaultApp", type: "defaultApp" },
+      { key: "autoUpdate", type: "toggle", hint: "autoUpdateHint" },
     ],
   },
   {

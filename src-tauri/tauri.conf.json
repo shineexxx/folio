@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Folio",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "identifier": "com.arseny.folio",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -78,6 +78,15 @@
     },
     "copyright": "© 2026 Arseny",
     "shortDescription": "Minimal WYSIWYG Markdown editor",
-    "longDescription": "Folio is a lightweight Markdown editor for macOS where you edit text right in its rendered form."
+    "longDescription": "Folio is a lightweight Markdown editor for macOS where you edit text right in its rendered form.",
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU4RUM2QUUzMTJEQkU0MkIKUldRcjVOc1M0MnJzV0x4Y2EvaE9ZN1ZJUTZhODNEK1hSWmNUM0kva3BDVGQ1UHd1NW5FV01PbXMK",
+      "endpoints": [
+        "https://github.com/shineexxx/folio/releases/latest/download/latest.json"
+      ]
+    }
   }
 }
