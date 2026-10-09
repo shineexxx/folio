@@ -76,6 +76,18 @@ npm run install-app                    # собрать и скопироват�
 
 Подпись берётся из `src-tauri/tauri.conf.json` → `bundle.macOS.signingIdentity`. Чтобы собрать со своим сертификатом, поменяй или удали это поле.
 
+### Выпуск релиза (подпись и нотаризация)
+
+```bash
+export APPLE_API_KEY=<key id> APPLE_API_ISSUER=<issuer id>
+export APPLE_API_KEY_PATH=~/.appstoreconnect/private_keys/AuthKey_<key id>.p8
+npx tauri build --bundles app,dmg      # подписывает, нотаризует и прикрепляет тикет к .app
+DMG=src-tauri/target/release/bundle/dmg/Folio_<version>_aarch64.dmg
+xcrun notarytool submit "$DMG" --key "$APPLE_API_KEY_PATH" --key-id "$APPLE_API_KEY" --issuer "$APPLE_API_ISSUER" --wait
+xcrun stapler staple "$DMG"
+gh release create v<version> "$DMG"
+```
+
 Страницы для разработки без Tauri (после `npm run dev`):
 
 - `http://localhost:1420/tests/playground.html`: редактор, `?en` для английского, `?prefs={...}` для любых настроек.

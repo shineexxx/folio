@@ -76,6 +76,18 @@ npm run install-app                    # build and copy to /Applications
 
 Signing uses the identity in `src-tauri/tauri.conf.json` → `bundle.macOS.signingIdentity`; change or remove it to build with your own certificate.
 
+### Release (signed and notarized)
+
+```bash
+export APPLE_API_KEY=<key id> APPLE_API_ISSUER=<issuer id>
+export APPLE_API_KEY_PATH=~/.appstoreconnect/private_keys/AuthKey_<key id>.p8
+npx tauri build --bundles app,dmg      # signs, notarizes and staples the app
+DMG=src-tauri/target/release/bundle/dmg/Folio_<version>_aarch64.dmg
+xcrun notarytool submit "$DMG" --key "$APPLE_API_KEY_PATH" --key-id "$APPLE_API_KEY" --issuer "$APPLE_API_ISSUER" --wait
+xcrun stapler staple "$DMG"
+gh release create v<version> "$DMG"
+```
+
 Dev pages without Tauri (after `npm run dev`):
 
 - `http://localhost:1420/tests/playground.html`: the editor, `?en` for English, `?prefs={...}` for any settings.
