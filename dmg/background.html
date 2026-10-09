@@ -1,0 +1,60 @@
+<!doctype html>
+<!-- DMG window background (660×400). Render: see README → Release. -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 660px; height: 400px; overflow: hidden; }
+  body {
+    background:
+      radial-gradient(120% 90% at 50% 0%, #fffdf8 0%, #f6efe0 60%, #efe5cf 100%);
+    font-family: "New York", Georgia, serif;
+    color: #1f2338;
+    position: relative;
+  }
+  /* faint paper ruling */
+  body::before {
+    content: ""; position: absolute; inset: 0;
+    background: repeating-linear-gradient(to bottom, transparent 0 31px, rgba(31,35,56,.035) 31px 32px);
+  }
+  .title {
+    position: absolute; top: 34px; width: 100%; text-align: center;
+    font-size: 34px; font-weight: 700; letter-spacing: .01em;
+  }
+  .title i { font-style: normal; display: inline-block; width: 3px; height: 30px; margin-left: 4px;
+    vertical-align: -3px; border-radius: 2px; background: linear-gradient(#4c8dff, #2463eb); }
+  .tagline {
+    position: absolute; top: 82px; width: 100%; text-align: center;
+    font-family: -apple-system, "SF Pro Text", sans-serif; font-size: 12.5px; color: #8a7f6a; letter-spacing: .02em;
+  }
+  svg.arrow { position: absolute; left: 0; top: 0; }
+  .hint {
+    position: absolute; top: 292px; width: 100%; text-align: center;
+    font-family: -apple-system, "SF Pro Text", sans-serif; font-size: 12px; color: #7d725e; line-height: 1.5;
+  }
+  .hint b { color: #1f2338; font-weight: 600; }
+  .version {
+    position: absolute; right: 16px; top: 12px;
+    font-family: -apple-system, sans-serif; font-size: 10px; color: #b3a88f;
+  }
+</style>
+</head>
+<body>
+  <div class="title">Folio<i></i></div>
+  <div class="tagline">Markdown, as on paper</div>
+  <!-- icons sit at (170,180) and (490,180); arrow between them -->
+  <svg class="arrow" width="660" height="400" viewBox="0 0 660 400">
+    <defs>
+      <linearGradient id="g" x1="0" x2="1">
+        <stop offset="0" stop-color="#4c8dff"/><stop offset="1" stop-color="#2463eb"/>
+      </linearGradient>
+    </defs>
+    <path d="M 262 186 C 310 152, 360 152, 400 180" fill="none" stroke="url(#g)" stroke-width="5"
+          stroke-linecap="round" stroke-dasharray="0.1 13"/>
+    <path d="M 388 166 L 404 183 L 383 188" fill="none" stroke="#2463eb" stroke-width="5"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <div class="hint">Drag <b>Folio</b> to <b>Applications</b> to install</div>
+  <div class="version">v1.1.1</div>
+</body>
+</html>

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Folio",
+  "version": "1.1.1",
+  "identifier": "com.arseny.folio",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [],
+    "security": {
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": {
+          "allow": [
+            "**"
+          ],
+          "requireLiteralLeadingDot": false
+        }
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "app",
+      "dmg"
+    ],
+    "category": "Productivity",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "md",
+          "markdown",
+          "mdown",
+          "mkd"
+        ],
+        "name": "Markdown Document",
+        "description": "Markdown document",
+        "role": "Editor",
+        "mimeType": "text/markdown",
+        "rank": "Default",
+        "contentTypes": [
+          "net.daringfireball.markdown"
+        ]
+      }
+    ],
+    "macOS": {
+      "minimumSystemVersion": "11.0",
+      "signingIdentity": "Developer ID Application: SHEROMI DIDZHITAL, OOO (83542XJA2A)",
+      "hardenedRuntime": true,
+      "dmg": {
+        "background": "../dmg/background.tiff",
+        "windowSize": {
+          "width": 660,
+          "height": 400
+        },
+        "appPosition": {
+          "x": 170,
+          "y": 180
+        },
+        "applicationFolderPosition": {
+          "x": 490,
+          "y": 180
+        }
+      }
+    },
+    "copyright": "© 2026 Arseny",
+    "shortDescription": "Minimal WYSIWYG Markdown editor",
+    "longDescription": "Folio is a lightweight Markdown editor for macOS where you edit text right in its rendered form."
+  }
+}

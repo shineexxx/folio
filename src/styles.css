@@ -1,0 +1,521 @@
+/* Colors and typography come from Settings (set inline on :root by applySettings).
+   The values below are only the defaults shown before settings load. */
+:root {
+  --bg: #ffffff;
+  --text: #37352f;
+  --muted: #787774;
+  --faint: #9b9a97;
+  --surface: #f7f6f3;
+  --accent: #2383e2;
+  --code-inline: #eb5757;
+  --menu-bg: #ffffff;
+
+  --column: 720px;
+  --pad-x: 48px;
+  --pad-top: 44px;
+  --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  --font-heading: var(--font-body);
+  --font-code: ui-monospace, "SF Mono", Menlo, monospace;
+  --font-size: 16px;
+  --font-weight: 400;
+  --line-height: 1.6;
+  --letter-spacing: 0em;
+  --para-space: 8px;
+  --heading-weight: 700;
+  --heading-scale: 1;
+  --code-size: 88%;
+  --code-ligatures: normal;
+  --smoothing: antialiased;
+
+  /* Derived */
+  --hover: color-mix(in srgb, var(--text) 6%, transparent);
+  --selected: color-mix(in srgb, var(--accent) 18%, transparent);
+  --border: color-mix(in srgb, var(--text) 12%, transparent);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #191919;
+  --text: #e6e6e4;
+  --muted: #9b9b9b;
+  --faint: #6f6f6f;
+  --surface: #202020;
+  --accent: #529cca;
+  --code-inline: #ff7369;
+  --menu-bg: #252525;
+  --selected: color-mix(in srgb, var(--accent) 30%, transparent);
+  color-scheme: dark;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: var(--smoothing);
+}
+
+#editor {
+  font-family: var(--font-body);
+  caret-color: var(--accent);
+}
+
+/* Transparent titlebar: draggable strip over the content. */
+.titlebar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 28px;
+  z-index: 100;
+  background: var(--bg);
+}
+
+main {
+  min-height: 100%;
+  box-sizing: border-box;
+  padding: var(--pad-top) 0 30vh;
+}
+
+#source {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: calc(var(--column) + 2 * var(--pad-x));
+  min-height: calc(100vh - 80px);
+  margin: 0 auto;
+  padding: 0 var(--pad-x);
+  border: 0;
+  outline: 0;
+  resize: none;
+  background: transparent;
+  color: var(--text);
+  caret-color: var(--accent);
+  font-family: var(--font-code);
+  font-size: calc(var(--font-size) * 0.9);
+  line-height: 1.65;
+  font-variant-ligatures: var(--code-ligatures);
+  field-sizing: content;
+}
+
+#source[hidden],
+#editor[hidden] {
+  display: none;
+}
+
+/* ---------- Milkdown / Crepe theme ---------- */
+
+#editor .milkdown {
+  --crepe-color-background: var(--bg);
+  --crepe-color-on-background: var(--text);
+  --crepe-color-surface: var(--surface);
+  --crepe-color-surface-low: var(--surface);
+  --crepe-color-on-surface: var(--text);
+  --crepe-color-on-surface-variant: var(--muted);
+  --crepe-color-outline: var(--faint);
+  --crepe-color-primary: var(--accent);
+  --crepe-color-secondary: var(--selected);
+  --crepe-color-on-secondary: var(--text);
+  --crepe-color-inverse: var(--text);
+  --crepe-color-on-inverse: var(--bg);
+  --crepe-color-inline-code: var(--code-inline);
+  --crepe-color-error: #e03e3e;
+  --crepe-color-hover: var(--hover);
+  --crepe-color-selected: var(--selected);
+  --crepe-color-inline-area: var(--surface);
+
+  --crepe-base-font-size: var(--font-size);
+  --crepe-font-title: var(--font-heading);
+  --crepe-font-default: var(--font-body);
+  --crepe-font-code: var(--font-code);
+
+  --crepe-shadow-1: 0 1px 3px rgba(15, 15, 15, 0.1), 0 0 0 1px var(--border);
+  --crepe-shadow-2: 0 4px 12px rgba(15, 15, 15, 0.12), 0 0 0 1px var(--border);
+}
+
+#editor .milkdown .ProseMirror {
+  max-width: var(--column);
+  box-sizing: content-box;
+  margin: 0 auto;
+  padding: 0 var(--pad-x);
+  line-height: var(--line-height);
+  font-weight: var(--font-weight);
+  letter-spacing: var(--letter-spacing);
+  outline: none;
+}
+
+#editor .milkdown .ProseMirror p {
+  line-height: var(--line-height);
+  padding: calc(var(--para-space) / 2) 0;
+}
+
+#editor .milkdown .ProseMirror :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-heading);
+  font-weight: var(--heading-weight);
+  letter-spacing: -0.01em;
+}
+
+#editor .milkdown .ProseMirror h1 { font-size: calc(1em + 1em * var(--heading-scale)); line-height: 1.25; margin-top: 1.4em; }
+#editor .milkdown .ProseMirror h2 { font-size: calc(1em + 0.5em * var(--heading-scale)); line-height: 1.3; margin-top: 1.3em; }
+#editor .milkdown .ProseMirror h3 { font-size: calc(1em + 0.25em * var(--heading-scale)); line-height: 1.3; margin-top: 1.1em; }
+#editor .milkdown .ProseMirror :is(h4, h5, h6) { font-size: calc(1em + 0.05em * var(--heading-scale)); margin-top: 1em; }
+#editor .milkdown .ProseMirror > :first-child { margin-top: 0; }
+
+/* Lists: Notion-like density. */
+#editor .milkdown .ProseMirror li p { padding: 1px 0; }
+#editor .milkdown .milkdown-list-item-block li .label-wrapper,
+#editor .milkdown .milkdown-list-item-block li .label-wrapper .label { height: calc(var(--font-size) * var(--line-height) + 2px); }
+#editor .milkdown .milkdown-list-item-block li { gap: 6px; }
+
+/* Done tasks */
+.strike-done #editor .milkdown .milkdown-list-item-block li:has(> .label-wrapper .label.checked) > .children {
+  text-decoration: line-through;
+  text-decoration-color: var(--faint);
+  color: var(--muted);
+}
+
+/* Inline code */
+#editor .milkdown .ProseMirror :not(pre) > code {
+  font-family: var(--font-code);
+  font-size: var(--code-size);
+  font-variant-ligatures: var(--code-ligatures);
+}
+
+/* Code blocks */
+#editor .milkdown .milkdown-code-block {
+  padding: 6px 16px 10px;
+  margin: 8px 0;
+  border-radius: 6px;
+}
+#editor .milkdown .milkdown-code-block .cm-editor {
+  font-size: var(--code-size);
+}
+#editor .milkdown .milkdown-code-block .cm-scroller {
+  font-family: var(--font-code);
+  font-variant-ligatures: var(--code-ligatures);
+}
+#editor .milkdown .milkdown-code-block .cm-gutters { display: none; }
+.code-numbers #editor .milkdown .milkdown-code-block .cm-gutters { display: flex; }
+#editor .milkdown .milkdown-code-block .cm-activeLine,
+#editor .milkdown .milkdown-code-block .cm-activeLineGutter { background: transparent; }
+
+/* Images */
+#editor .milkdown .ProseMirror img { max-width: 100%; border-radius: 4px; }
+
+#editor .milkdown .ProseMirror a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  text-underline-offset: 2px;
+}
+
+#editor .milkdown .ProseMirror blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 14px;
+}
+
+#editor .milkdown .ProseMirror hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+#editor .milkdown .ProseMirror ::selection {
+  background: var(--selected);
+}
+
+.no-placeholder #editor .milkdown .crepe-placeholder::before {
+  content: none !important;
+}
+
+@media (max-width: 560px) {
+  #editor .milkdown .ProseMirror,
+  #source {
+    padding: 0 20px;
+  }
+}
+
+/* ---------- "/" menu and block handle ---------- */
+
+#editor .milkdown .milkdown-block-handle {
+  display: none !important;
+}
+.show-handle #editor .milkdown .milkdown-block-handle {
+  display: flex !important;
+}
+
+#editor .milkdown .milkdown-slash-menu {
+  background: var(--menu-bg);
+  border-radius: 8px;
+  box-shadow: var(--crepe-shadow-2);
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+}
+
+/* ---------- settings window ---------- */
+
+body.settings {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+body.settings #tabs {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+
+body.settings #tabs button {
+  font: inherit;
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+}
+
+body.settings #tabs button:hover { background: var(--hover); }
+body.settings #tabs button.on {
+  background: var(--selected);
+  color: var(--text);
+  font-weight: 600;
+}
+
+body.settings #pane {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 28px 8px;
+}
+
+body.settings .fields {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+body.settings .section-hint {
+  margin: 0 0 4px;
+  color: var(--muted);
+  text-align: center;
+}
+
+body.settings .row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  align-items: center;
+  gap: 14px;
+}
+
+body.settings .row.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+body.settings .row .label {
+  text-align: right;
+  color: var(--muted);
+}
+
+body.settings .cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+body.settings .cell small {
+  color: var(--faint);
+  font-size: 11px;
+}
+
+body.settings select,
+body.settings input[type="text"] {
+  font: inherit;
+  width: 240px;
+  box-sizing: border-box;
+}
+
+body.settings input[type="text"] {
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body.settings .range {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+body.settings .range input { width: 200px; accent-color: var(--accent); }
+body.settings input[type="checkbox"] { accent-color: var(--accent); }
+
+body.settings output {
+  min-width: 56px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+body.settings .color {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body.settings input[type="color"] {
+  width: 28px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: none;
+}
+
+body.settings .swatches {
+  display: flex;
+  gap: 5px;
+}
+
+body.settings .swatch {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+body.settings .swatch.on {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+body.settings button.push {
+  font: inherit;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+body.settings .status {
+  color: var(--muted);
+}
+
+body.settings button.link {
+  font: inherit;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+}
+
+body.settings .preview {
+  position: relative;
+  margin: 20px 0 12px;
+  padding: 26px 20px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  user-select: text;
+}
+
+body.settings .preview-label {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* A miniature of the document, driven by the same variables. */
+body.settings .preview-doc {
+  font-family: var(--font-body);
+  font-size: var(--font-size);
+  font-weight: var(--font-weight);
+  line-height: var(--line-height);
+  letter-spacing: var(--letter-spacing);
+  -webkit-font-smoothing: var(--smoothing);
+}
+
+body.settings .preview-doc h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: var(--heading-weight);
+  font-size: calc(1em + 0.5em * var(--heading-scale));
+  line-height: 1.3;
+}
+
+body.settings .preview-doc p { margin: var(--para-space) 0; }
+body.settings .preview-doc strong { font-weight: 700; }
+
+body.settings .preview-doc code {
+  font-family: var(--font-code);
+  font-size: var(--code-size);
+  font-variant-ligatures: var(--code-ligatures);
+  color: var(--code-inline);
+  background: var(--surface);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+body.settings .preview-doc ul {
+  margin: 0;
+  padding-left: 1.4em;
+}
+
+body.settings .preview-doc li.task { list-style: "☑  "; }
+.strike-done body.settings .preview-doc li.task.done {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+body.settings .preview-doc pre {
+  margin: var(--para-space) 0 0;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+body.settings .preview-doc pre code {
+  padding: 0;
+  color: var(--text);
+  background: none;
+}
+
+body.settings .md-sample {
+  margin: 0;
+  font: 12.5px/1.55 ui-monospace, "SF Mono", Menlo, monospace;
+  color: var(--text);
+  white-space: pre;
+}
+
+body.settings footer {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 20px 14px;
+  border-top: 1px solid var(--border);
+}
+
+body.settings footer button {
+  font: inherit;
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+}

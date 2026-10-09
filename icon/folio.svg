@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Standard macOS icon grid: 824px rounded-square body, so macOS 26 shows it as-is. -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#34407A"/>
+      <stop offset="1" stop-color="#141831"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#FFFDF8"/>
+      <stop offset="1" stop-color="#EEE4CE"/>
+    </linearGradient>
+    <linearGradient id="fold" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#F7F0E0"/>
+      <stop offset="1" stop-color="#D5C6A4"/>
+    </linearGradient>
+    <linearGradient id="ink" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#262B4A"/>
+      <stop offset="1" stop-color="#121524"/>
+    </linearGradient>
+    <linearGradient id="caret" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4C8DFF"/>
+      <stop offset="1" stop-color="#2463EB"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0" r="0.9">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="drop" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity="0.30"/>
+    </filter>
+    <filter id="pageShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#05070F" flood-opacity="0.45"/>
+    </filter>
+    <filter id="foldShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="-6" dy="8" stdDeviation="8" flood-color="#5A4A2A" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#tile)" filter="url(#drop)"/>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#glow)"/>
+
+  <!-- Page with a folded top-right corner -->
+  <path filter="url(#pageShadow)" fill="url(#paper)" d="
+    M 302 214 H 632 L 762 344 V 770 C 762 792 744 810 722 810 H 302
+    C 280 810 262 792 262 770 V 254 C 262 232 280 214 302 214 Z"/>
+  <path filter="url(#foldShadow)" fill="url(#fold)" d="
+    M 632 214 L 762 344 H 662 C 645 344 632 331 632 314 Z"/>
+
+  <!-- Serif F and caret -->
+  <text x="306" y="606" font-family="'New York', Georgia, serif" font-weight="700" font-size="380" fill="url(#ink)">F</text>
+  <rect x="590" y="330" width="24" height="282" rx="12" fill="url(#caret)"/>
+
+  <!-- Faint text lines -->
+  <g fill="#1B1F33" opacity="0.12">
+    <rect x="322" y="668" width="320" height="20" rx="10"/>
+    <rect x="322" y="716" width="220" height="20" rx="10"/>
+  </g>
+</svg>
