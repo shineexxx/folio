@@ -76,6 +76,11 @@ npm run install-app                    # собрать и скопироват�
 
 Подпись берётся из `src-tauri/tauri.conf.json` → `bundle.macOS.signingIdentity`. Чтобы собрать со своим сертификатом, поменяй или удали это поле.
 
+Страницы для разработки без Tauri (после `npm run dev`):
+
+- `http://localhost:1420/tests/playground.html`: редактор, `?en` для английского, `?prefs={...}` для любых настроек.
+- `http://localhost:1420/tests/roundtrip.html`: показывает, как редактор пересохраняет `tests/sample.md` (`?edge` для сложных случаев).
+
 ### Выпуск релиза (подпись и нотаризация)
 
 ```bash
@@ -87,11 +92,6 @@ xcrun notarytool submit "$DMG" --key "$APPLE_API_KEY_PATH" --key-id "$APPLE_API_
 xcrun stapler staple "$DMG"
 gh release create v<version> "$DMG"
 ```
-
-Страницы для разработки без Tauri (после `npm run dev`):
-
-- `http://localhost:1420/tests/playground.html`: редактор, `?en` для английского, `?prefs={...}` для любых настроек.
-- `http://localhost:1420/tests/roundtrip.html`: показывает, как редактор пересохраняет `tests/sample.md` (`?edge` для сложных случаев).
 
 ## Устройство
 

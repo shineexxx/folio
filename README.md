@@ -76,6 +76,11 @@ npm run install-app                    # build and copy to /Applications
 
 Signing uses the identity in `src-tauri/tauri.conf.json` → `bundle.macOS.signingIdentity`; change or remove it to build with your own certificate.
 
+Dev pages without Tauri (after `npm run dev`):
+
+- `http://localhost:1420/tests/playground.html`: the editor, `?en` for English, `?prefs={...}` for any settings.
+- `http://localhost:1420/tests/roundtrip.html`: shows how the editor re-serializes `tests/sample.md` (`?edge` for edge cases).
+
 ### Release (signed and notarized)
 
 ```bash
@@ -87,11 +92,6 @@ xcrun notarytool submit "$DMG" --key "$APPLE_API_KEY_PATH" --key-id "$APPLE_API_
 xcrun stapler staple "$DMG"
 gh release create v<version> "$DMG"
 ```
-
-Dev pages without Tauri (after `npm run dev`):
-
-- `http://localhost:1420/tests/playground.html`: the editor, `?en` for English, `?prefs={...}` for any settings.
-- `http://localhost:1420/tests/roundtrip.html`: shows how the editor re-serializes `tests/sample.md` (`?edge` for edge cases).
 
 ## Project layout
 
