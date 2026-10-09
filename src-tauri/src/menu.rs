@@ -20,6 +20,11 @@ pub fn tr(lang: &str, key: &str) -> &'static str {
         } else {
             "The update is installed. Restart Folio now? Open documents will be saved."
         },
+        "update-windows-note" => if ru {
+            "Folio закроется на время установки и откроется снова. Открытые документы сохранятся."
+        } else {
+            "Folio will close during installation and reopen. Open documents will be saved."
+        },
         "update-restart" => if ru { "Перезапустить" } else { "Restart" },
         "update-none" => if ru { "У вас последняя версия Folio ({v})." } else { "You're up to date: Folio {v}." },
         "update-error" => if ru { "Не удалось проверить обновления:" } else { "Couldn't check for updates:" },
@@ -49,10 +54,14 @@ pub fn tr(lang: &str, key: &str) -> &'static str {
         "minimize" => if ru { "Свернуть" } else { "Minimize" },
         "zoom" => if ru { "Изменить масштаб" } else { "Zoom" },
         "untitled" => if ru { "Без названия" } else { "Untitled" },
+        "reveal-explorer" => if ru { "Показать в Проводнике" } else { "Show in Explorer" },
+        "exit" => if ru { "Выход" } else { "Exit" },
+        "help" => if ru { "Справка" } else { "Help" },
         _ => "",
     }
 }
 
+#[cfg(target_os = "macos")]
 fn build(app: &AppHandle, lang: &str) -> tauri::Result<Menu<Wry>> {
     let t = |key: &str| tr(lang, key);
     let item = |id: &str, key: &str, accel: Option<&str>| {
@@ -112,6 +121,56 @@ fn build(app: &AppHandle, lang: &str) -> tauri::Result<Menu<Wry>> {
 
     MenuBuilder::new(app)
         .items(&[&app_menu, &file_menu, &edit_menu, &view_menu, &window_menu])
+        .build()
+}
+
+/// Windows: the menu bar lives in each window, so follow Windows conventions
+/// (File / Edit / View / Help, settings under File, updates and About under Help).
+#[cfg(not(target_os = "macos"))]
+fn build(app: &AppHandle, lang: &str) -> tauri::Result<Menu<Wry>> {
+    let t = |key: &str| tr(lang, key);
+    let item = |id: &str, key: &str, accel: Option<&str>| {
+        let mut b = MenuItemBuilder::with_id(id, t(key));
+        if let Some(a) = accel {
+            b = b.accelerator(a);
+        }
+        b.build(app)
+    };
+
+    let file_menu = SubmenuBuilder::new(app, t("file"))
+        .item(&item("new", "new", Some("CmdOrCtrl+N"))?)
+        .item(&item("open", "open", Some("CmdOrCtrl+O"))?)
+        .separator()
+        .item(&item("save", "save", Some("CmdOrCtrl+S"))?)
+        .item(&item("save-as", "save-as", Some("CmdOrCtrl+Shift+S"))?)
+        .separator()
+        .item(&item("reveal", "reveal-explorer", None)?)
+        .separator()
+        .item(&item("settings", "settings", Some("CmdOrCtrl+,"))?)
+        .separator()
+        .item(&PredefinedMenuItem::close_window(app, Some(t("close")))?)
+        .item(&item("quit", "exit", None)?)
+        .build()?;
+
+    let edit_menu = SubmenuBuilder::new(app, t("edit"))
+        .item(&PredefinedMenuItem::cut(app, Some(t("cut")))?)
+        .item(&PredefinedMenuItem::copy(app, Some(t("copy")))?)
+        .item(&PredefinedMenuItem::paste(app, Some(t("paste")))?)
+        .item(&PredefinedMenuItem::select_all(app, Some(t("select-all")))?)
+        .build()?;
+
+    let view_menu = SubmenuBuilder::new(app, t("view"))
+        .item(&item("source", "source", Some("CmdOrCtrl+/"))?)
+        .build()?;
+
+    let help_menu = SubmenuBuilder::new(app, t("help"))
+        .item(&item("check-updates", "check-updates", None)?)
+        .separator()
+        .item(&PredefinedMenuItem::about(app, Some(t("about")), None)?)
+        .build()?;
+
+    MenuBuilder::new(app)
+        .items(&[&file_menu, &edit_menu, &view_menu, &help_menu])
         .build()
 }
 

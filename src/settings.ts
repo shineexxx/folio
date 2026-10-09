@@ -2,8 +2,10 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
-import { strings, type Lang, type Strings } from "./i18n";
+import { stringsFor, type Lang, type Strings } from "./i18n";
 import { PALETTES } from "./palettes";
+
+export const IS_WINDOWS = navigator.userAgent.includes("Windows");
 
 export const DEFAULTS = {
   // General
@@ -92,7 +94,7 @@ export const makeDefaultApp = () => invoke("set_default_markdown_app");
 
 export const listFonts = () => invoke<string[]>("list_fonts").catch(() => [] as string[]);
 
-export const t = (s: Settings): Strings => strings[s.lang];
+export const t = (s: Settings): Strings => stringsFor(s.lang, IS_WINDOWS);
 
 export const onSettingsChanged = (fn: (s: Settings) => void) =>
   listen<Partial<Settings>>("settings-changed", ({ payload }) =>
@@ -101,11 +103,12 @@ export const onSettingsChanged = (fn: (s: Settings) => void) =>
 
 // ---------- applying to a window ----------
 
+// macOS fonts first, then their Windows counterparts.
 const FONT_PRESETS: Record<string, string> = {
-  system: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif',
-  serif: '"New York", ui-serif, "Iowan Old Style", Charter, Georgia, serif',
-  rounded: 'ui-rounded, "SF Pro Rounded", -apple-system, sans-serif',
-  mono: 'ui-monospace, "SF Mono", Menlo, monospace',
+  system: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", "Helvetica Neue", sans-serif',
+  serif: '"New York", ui-serif, "Iowan Old Style", Charter, Cambria, Georgia, serif',
+  rounded: 'ui-rounded, "SF Pro Rounded", -apple-system, "Segoe UI Variable Display", "Segoe UI", sans-serif',
+  mono: 'ui-monospace, "SF Mono", "Cascadia Mono", Consolas, Menlo, monospace',
 };
 
 export function fontStack(name: string, fallback = "system"): string {
@@ -125,6 +128,7 @@ export function applySettings(s: Settings) {
   const css = (name: string, value: string | number) => root.style.setProperty(name, String(value));
 
   root.lang = s.lang;
+  root.classList.toggle("windows", IS_WINDOWS);
   root.dataset.theme = isDark(s) ? "dark" : "light";
   const palette = (PALETTES[s.palette] ?? PALETTES.default)[isDark(s) ? "dark" : "light"];
   css("--bg", palette.bg);

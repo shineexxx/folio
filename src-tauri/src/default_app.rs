@@ -37,24 +37,63 @@ mod imp {
     }
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(windows)]
+mod imp {
+    use windows_sys::Win32::UI::Shell::{AssocQueryStringW, ASSOCF_NONE, ASSOCSTR_EXECUTABLE};
+
+    /// Executable that opens `.md` files.
+    pub fn current() -> Option<String> {
+        let ext: Vec<u16> = ".md\0".encode_utf16().collect();
+        let verb: Vec<u16> = "open\0".encode_utf16().collect();
+        let mut len: u32 = 1024;
+        let mut buf = vec![0u16; len as usize];
+        let hr = unsafe {
+            AssocQueryStringW(ASSOCF_NONE, ASSOCSTR_EXECUTABLE, ext.as_ptr(), verb.as_ptr(), buf.as_mut_ptr(), &mut len)
+        };
+        if hr != 0 {
+            return None;
+        }
+        Some(String::from_utf16_lossy(&buf[..(len as usize).saturating_sub(1)]))
+    }
+}
+
+#[cfg(not(any(target_os = "macos", windows)))]
 mod imp {
     pub fn current() -> Option<String> {
         None
-    }
-    pub fn set(_: &str) -> Result<(), String> {
-        Err("unsupported".into())
     }
 }
 
 /// Whether Folio currently opens Markdown files by default.
 #[tauri::command]
 pub fn is_default_markdown_app(app: tauri::AppHandle) -> bool {
-    let id = &app.config().identifier;
-    imp::current().is_some_and(|h| h.eq_ignore_ascii_case(id))
+    let Some(handler) = imp::current() else { return false };
+    #[cfg(target_os = "macos")]
+    {
+        handler.eq_ignore_ascii_case(&app.config().identifier)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = &app;
+        std::env::current_exe()
+            .map(|exe| exe.to_string_lossy().eq_ignore_ascii_case(&handler))
+            .unwrap_or(false)
+    }
 }
 
+/// macOS: switch the handler directly. Windows doesn't allow apps to do that,
+/// so open Settings → Default apps for the user to pick Folio.
 #[tauri::command]
 pub fn set_default_markdown_app(app: tauri::AppHandle) -> Result<(), String> {
-    imp::set(&app.config().identifier)
+    #[cfg(target_os = "macos")]
+    {
+        imp::set(&app.config().identifier)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        use tauri_plugin_opener::OpenerExt;
+        app.opener()
+            .open_url("ms-settings:defaultapps", None::<&str>)
+            .map_err(|e| e.to_string())
+    }
 }

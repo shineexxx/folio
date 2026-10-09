@@ -5,10 +5,10 @@ use std::sync::Mutex;
 use std::time::{Duration, UNIX_EPOCH};
 
 use tauri::{
-    AppHandle, Emitter, EventTarget, Manager, RunEvent, TitleBarStyle, WebviewUrl, WebviewWindow,
-    WebviewWindowBuilder,
+    AppHandle, Emitter, EventTarget, Manager, RunEvent, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
 };
 use tauri_plugin_dialog::DialogExt;
+use tauri_plugin_opener::OpenerExt;
 
 mod default_app;
 mod menu;
@@ -79,9 +79,9 @@ fn mtime_ms(path: &Path) -> u64 {
         .unwrap_or(0)
 }
 
-/// Open a link in the default app, or reveal a file in Finder.
+/// Open a link in the default app, or reveal a file in Finder / Explorer.
 #[tauri::command]
-fn open_external(target: String, reveal: bool) -> Result<(), String> {
+fn open_external(app: AppHandle, target: String, reveal: bool) -> Result<(), String> {
     let is_url = target.contains("://") || target.starts_with("mailto:");
     if is_url && !["http://", "https://", "mailto:"].iter().any(|s| target.starts_with(s)) {
         return Err("unsupported link".into());
@@ -89,11 +89,30 @@ fn open_external(target: String, reveal: bool) -> Result<(), String> {
     if !is_url && !Path::new(&target).exists() {
         return Err("file not found".into());
     }
-    let mut cmd = std::process::Command::new("open");
-    if reveal {
-        cmd.arg("-R");
+    let opener = app.opener();
+    let result = if reveal {
+        opener.reveal_item_in_dir(&target)
+    } else if is_url {
+        opener.open_url(target, None::<&str>)
+    } else {
+        opener.open_path(target, None::<&str>)
+    };
+    result.map_err(|e| e.to_string())
+}
+
+/// `canonicalize` on Windows returns `\\?\C:\…`; strip that so the UI gets a normal path.
+fn normalize_path(path: PathBuf) -> PathBuf {
+    let path = path.canonicalize().unwrap_or(path);
+    #[cfg(windows)]
+    {
+        let s = path.to_string_lossy();
+        if let Some(rest) = s.strip_prefix(r"\\?\") {
+            if !rest.starts_with("UNC\\") {
+                return PathBuf::from(rest.to_string());
+            }
+        }
     }
-    cmd.arg(&target).spawn().map(|_| ()).map_err(|e| e.to_string())
+    path
 }
 
 // ---------- window commands ----------
@@ -117,7 +136,7 @@ fn cancel_quit(state: tauri::State<Windows>) {
 
 fn open_document(app: &AppHandle, path: Option<PathBuf>) {
     let state = app.state::<Windows>();
-    let path = path.map(|p| p.canonicalize().unwrap_or(p));
+    let path = path.map(normalize_path);
 
     // Already open? Just focus that window.
     if let Some(p) = &path {
@@ -151,8 +170,12 @@ fn open_document(app: &AppHandle, path: Option<PathBuf>) {
         .title(&title)
         .inner_size(860.0, 900.0)
         .min_inner_size(420.0, 300.0)
-        .title_bar_style(TitleBarStyle::Overlay)
         .initialization_script(&init);
+    // macOS: content runs under a transparent titlebar. Windows keeps the standard one.
+    #[cfg(target_os = "macos")]
+    {
+        builder = builder.title_bar_style(tauri::TitleBarStyle::Overlay);
+    }
 
     // Cascade new windows from the focused one, like native document apps.
     if let Some(pos) = app
@@ -185,7 +208,7 @@ fn open_settings(app: &AppHandle) {
         let _ = window.set_focus();
         return;
     }
-    let _ = WebviewWindowBuilder::new(app, SETTINGS_LABEL, WebviewUrl::App("settings.html".into()))
+    let window = WebviewWindowBuilder::new(app, SETTINGS_LABEL, WebviewUrl::App("settings.html".into()))
         .title(menu::tr(current_lang(app), "settings-title"))
         .inner_size(640.0, 560.0)
         .resizable(false)
@@ -193,6 +216,13 @@ fn open_settings(app: &AppHandle) {
         .maximizable(false)
         .center()
         .build();
+    // On Windows the app menu is drawn inside every window; the settings window doesn't need it.
+    #[cfg(windows)]
+    if let Ok(w) = window {
+        let _ = w.remove_menu();
+    }
+    #[cfg(not(windows))]
+    let _ = window;
 }
 
 fn pick_and_open(app: &AppHandle) {
@@ -234,19 +264,37 @@ pub(crate) fn quit(app: &AppHandle, restart: bool) {
     }
 }
 
-fn md_paths_from_args() -> Vec<PathBuf> {
-    std::env::args()
+fn md_paths(args: impl IntoIterator<Item = String>, cwd: &Path) -> Vec<PathBuf> {
+    args.into_iter()
         .skip(1)
         .filter(|a| !a.starts_with('-'))
-        .map(PathBuf::from)
+        .map(|a| cwd.join(a))
         .filter(|p| p.is_file())
         .collect()
 }
 
+fn md_paths_from_args() -> Vec<PathBuf> {
+    let cwd = std::env::current_dir().unwrap_or_default();
+    md_paths(std::env::args(), &cwd)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    // Windows starts a new process for every double-clicked file; hand it to the running one.
+    #[cfg(windows)]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(|app, args, cwd| {
+        let paths = md_paths(args, Path::new(&cwd));
+        if paths.is_empty() {
+            open_document(app, None);
+        }
+        for path in paths {
+            open_document(app, Some(path));
+        }
+    }));
+    builder
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(Windows::default())
         .setup(|app| {
@@ -342,6 +390,7 @@ pub fn run() {
                 }
             }
             // Stay in the Dock after the last window closes, like other Mac apps.
+            #[cfg(target_os = "macos")]
             RunEvent::ExitRequested { api, code, .. } => {
                 if code.is_none() && !app.state::<Windows>().quitting.load(Ordering::SeqCst) {
                     api.prevent_exit();

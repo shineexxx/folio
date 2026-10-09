@@ -2,6 +2,8 @@
 
 use std::sync::atomic::{AtomicBool, Ordering};
 
+#[cfg(windows)]
+use tauri::Emitter;
 use tauri::{AppHandle, Manager};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
 use tauri_plugin_updater::UpdaterExt;
@@ -86,11 +88,31 @@ async fn run(app: &AppHandle, manual: bool) {
         text.push_str("\n\n");
         text.push_str(&first);
     }
+    #[cfg(windows)]
+    {
+        text.push_str("\n\n");
+        text.push_str(tr(l, "update-windows-note"));
+    }
     if !confirm(app, "Folio", text, tr(l, "update-install"), tr(l, "update-later")) {
         return;
     }
 
-    if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
+    let bytes = match update.download(|_, _| {}, || {}).await {
+        Ok(bytes) => bytes,
+        Err(e) => {
+            info(app, "Folio", format!("{}\n{e}", tr(l, "update-error")), MessageDialogKind::Error);
+            return;
+        }
+    };
+
+    // On Windows the installer closes Folio right away: save open documents first.
+    #[cfg(windows)]
+    {
+        let _ = app.emit("flush-all", ());
+        std::thread::sleep(std::time::Duration::from_millis(800));
+    }
+
+    if let Err(e) = update.install(bytes) {
         info(app, "Folio", format!("{}\n{e}", tr(l, "update-error")), MessageDialogKind::Error);
         return;
     }

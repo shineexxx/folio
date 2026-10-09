@@ -1,0 +1,81 @@
+# Builds the Windows installer. Runs automatically when a release is published
+# (scripts/release.sh publishes the macOS build first), uploads the installer and
+# adds the Windows entry to the release's latest.json for auto-update.
+# Run it by hand (Actions → Windows → Run workflow) to just build and download it.
+name: Windows
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to attach the installer to (empty = build only)"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: npm ci
+
+      - name: Build installer
+        run: |
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            npx tauri build --bundles nsis
+          else
+            echo "::warning::No updater signing key in secrets; building without update artifacts"
+            npx tauri build --bundles nsis --config '{"bundle":{"createUpdaterArtifacts":false}}'
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: folio-windows
+          path: src-tauri/target/release/bundle/nsis/*
+
+      - name: Attach to release and update latest.json
+        if: env.TAG != ''
+        run: |
+          set -euo pipefail
+          VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          EXE="src-tauri/target/release/bundle/nsis/Folio_${VERSION}_x64-setup.exe"
+          test -f "$EXE.sig" || { echo "::error::Missing $EXE.sig (set the TAURI_SIGNING_PRIVATE_KEY secrets)"; exit 1; }
+          gh release upload "$TAG" "$EXE" --clobber
+          gh release download "$TAG" --pattern latest.json --output latest.json --clobber
+          EXE="$EXE" TAG="$TAG" REPO="$GITHUB_REPOSITORY" node -e '
+            const fs = require("fs"), path = require("path");
+            const { EXE, TAG, REPO } = process.env;
+            const json = JSON.parse(fs.readFileSync("latest.json", "utf8"));
+            json.platforms["windows-x86_64"] = {
+              signature: fs.readFileSync(EXE + ".sig", "utf8").trim(),
+              url: `https://github.com/${REPO}/releases/download/${TAG}/${path.basename(EXE)}`,
+            };
+            fs.writeFileSync("latest.json", JSON.stringify(json, null, 2));
+          '
+          gh release upload "$TAG" latest.json --clobber

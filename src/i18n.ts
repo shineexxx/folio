@@ -302,3 +302,34 @@ const en: typeof ru = {
 export type Strings = typeof ru;
 
 export const strings: Record<Lang, Strings> = { ru, en };
+
+/** Windows wording: Ctrl instead of Cmd, Windows fonts, Help menu, Settings app. */
+const windowsOverrides: Record<Lang, Partial<Strings>> = {
+  ru: {
+    fontSystem: "Системный (Segoe UI)",
+    fontSerif: "С засечками (Cambria)",
+    fontRounded: "Скруглённый",
+    fontMono: "Моноширинный (Cascadia)",
+    autoUpdateHint: "При запуске. Вручную: Справка → «Проверить обновления…»",
+    defaultAppMake: "Выбрать Folio в параметрах Windows",
+    defaultAppAskDetail: "Откроются параметры Windows: в «Приложения по умолчанию» выберите Folio для файлов .md.",
+    defaultAppYes: "Открыть параметры",
+  },
+  en: {
+    fontSystem: "System (Segoe UI)",
+    fontSerif: "Serif (Cambria)",
+    fontRounded: "Rounded",
+    fontMono: "Monospace (Cascadia)",
+    autoUpdateHint: "On launch. Manually: Help → “Check for Updates…”",
+    defaultAppMake: "Choose Folio in Windows Settings",
+    defaultAppAskDetail: "Windows Settings will open: under Default apps, pick Folio for .md files.",
+    defaultAppYes: "Open Settings",
+  },
+};
+
+export function stringsFor(lang: Lang, windows: boolean): Strings {
+  if (!windows) return strings[lang];
+  const base = { ...strings[lang], ...windowsOverrides[lang] };
+  for (const key of Object.keys(base) as (keyof Strings)[]) base[key] = base[key].replace(/\bCmd\b/g, "Ctrl");
+  return base;
+}

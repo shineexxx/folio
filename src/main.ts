@@ -43,23 +43,28 @@ let T = t(settings);
 
 // ---------- paths ----------
 
-const dirOf = (p: string) => p.slice(0, p.lastIndexOf("/"));
-const baseName = (p: string) => p.slice(p.lastIndexOf("/") + 1);
+// Paths are handled with forward slashes; Windows accepts them too ("C:/Users/…").
+const norm = (p: string) => p.replace(/\\/g, "/");
+const dirOf = (p: string) => norm(p).slice(0, norm(p).lastIndexOf("/"));
+const baseName = (p: string) => norm(p).slice(norm(p).lastIndexOf("/") + 1);
+const isAbsolute = (p: string) => p.startsWith("/") || /^[a-z]:\//i.test(p);
 
 function resolvePath(base: string, rel: string): string {
-  const parts = (rel.startsWith("/") ? rel : `${base}/${rel}`).split("/");
+  const full = isAbsolute(norm(rel)) ? norm(rel) : `${norm(base)}/${norm(rel)}`;
+  const drive = full.match(/^[a-z]:/i)?.[0] ?? "";
   const out: string[] = [];
-  for (const part of parts) {
+  for (const part of full.slice(drive.length).split("/")) {
     if (part === "..") out.pop();
     else if (part && part !== ".") out.push(part);
   }
-  return "/" + out.join("/");
+  return `${drive}/${out.join("/")}`;
 }
 
 const isExternal = (url: string) => /^[a-z][a-z0-9+.-]*:/i.test(url);
 
 /** Map a markdown image src to something the webview can load. */
 function imageSrc(url: string): string {
+  if (/^[a-z]:[\\/]/i.test(url)) return convertFileSrc(norm(url)); // Windows absolute path
   if (!url || isExternal(url) || !filePath && !url.startsWith("/")) return url;
   const local = decodeURI(url.split(/[?#]/)[0]);
   return convertFileSrc(filePath ? resolvePath(dirOf(filePath), local) : local);
@@ -264,6 +269,8 @@ window.addEventListener("focus", async () => {
 });
 
 window.addEventListener("blur", () => void flush());
+// Sent before an update installer closes the app (Windows).
+await win.listen("flush-all", () => void flush());
 
 await win.onCloseRequested(async (event) => {
   await flush();

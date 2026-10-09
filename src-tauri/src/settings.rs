@@ -94,8 +94,47 @@ pub async fn list_fonts() -> Vec<String> {
         names.dedup();
         names
     }
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(windows)]
+    {
+        windows_fonts()
+    }
+    #[cfg(not(any(target_os = "macos", windows)))]
     {
         Vec::new()
     }
+}
+
+/// Windows lists installed fonts in the registry as "Family Style (TrueType)".
+#[cfg(windows)]
+fn windows_fonts() -> Vec<String> {
+    use winreg::enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
+    use winreg::RegKey;
+
+    const KEY: &str = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts";
+    const STYLES: &[&str] = &[
+        "Regular", "Bold", "Italic", "Oblique", "Light", "Thin", "Medium", "Black", "Heavy", "Book",
+        "Semibold", "SemiBold", "Demibold", "DemiBold", "Semilight", "SemiLight", "ExtraLight",
+        "ExtraBold", "UltraLight", "UltraBold", "Condensed", "SemiCondensed", "Narrow",
+    ];
+
+    let mut names = Vec::new();
+    for root in [HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER] {
+        let Ok(key) = RegKey::predef(root).open_subkey(KEY) else { continue };
+        for (value, _) in key.enum_values().flatten() {
+            let value = value.split(" (").next().unwrap_or(&value);
+            for face in value.split(" & ") {
+                let mut words: Vec<&str> = face.split_whitespace().collect();
+                while words.len() > 1 && STYLES.contains(words.last().unwrap()) {
+                    words.pop();
+                }
+                if !words.is_empty() {
+                    names.push(words.join(" "));
+                }
+            }
+        }
+    }
+    names.retain(|n| !n.starts_with('@'));
+    names.sort_by_key(|n| n.to_lowercase());
+    names.dedup();
+    names
 }
