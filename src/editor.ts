@@ -91,6 +91,10 @@ export function buildEditor({
         text: prefs.slashMenu ? t.placeholder : t.placeholderPlain,
         mode: "doc",
       },
+      // Crepe's "virtual cursor" toggles a class on the whole editor on every
+      // selection change, which makes WebKit repaint everything (text flickers
+      // while selecting). The native caret is fine.
+      [Crepe.Feature.Cursor]: { virtual: false },
       [Crepe.Feature.ListItem]: {
         bulletIcon: BULLETS[prefs.bulletStyle],
         ...(round && { checkBoxCheckedIcon: ROUND_CHECKED, checkBoxUncheckedIcon: ROUND_UNCHECKED }),
