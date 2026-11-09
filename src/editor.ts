@@ -1,6 +1,8 @@
 import { Crepe } from "@milkdown/crepe";
 import { imageInlineComponent, inlineImageConfig } from "@milkdown/kit/component/image-inline";
-import { commandsCtx, remarkStringifyOptionsCtx } from "@milkdown/kit/core";
+import { linkTooltipAPI } from "@milkdown/kit/component/link-tooltip";
+import { commandsCtx, editorViewCtx, remarkStringifyOptionsCtx } from "@milkdown/kit/core";
+import type { Mark } from "@milkdown/kit/prose/model";
 import { clearTextInCurrentBlockCommand, insertImageCommand } from "@milkdown/kit/preset/commonmark";
 import { uploadConfig, type Uploader } from "@milkdown/kit/plugin/upload";
 import { $remark } from "@milkdown/kit/utils";
@@ -192,4 +194,25 @@ const FRONTMATTER = /^---\r?\n[\s\S]*?\r?\n(?:---|\.\.\.)[ \t]*(?:\r?\n|$)\s*/;
 export function splitFile(text: string): [string, string] {
   const fm = text.match(FRONTMATTER)?.[0] ?? "";
   return [fm, text.slice(fm.length)];
+}
+
+/** Open Crepe's link editor for the link under `anchor`. */
+export function editLinkAt(crepe: Crepe, anchor: HTMLAnchorElement) {
+  crepe.editor.action((ctx) => {
+    const view = ctx.get(editorViewCtx);
+    const pos = view.posAtDOM(anchor, 0);
+    const $pos = view.state.doc.resolve(pos);
+    const linkType = view.state.schema.marks.link;
+    // Contiguous run of the same link mark around `pos`.
+    let from = -1, to = -1, mark: Mark | null = null;
+    $pos.parent.forEach((child, offset) => {
+      const start = $pos.start() + offset, end = start + child.nodeSize;
+      const m = linkType.isInSet(child.marks);
+      if (m && mark && m.eq(mark) && start === to) to = end;
+      else if (m && pos >= start && pos <= end && from < 0) [from, to, mark] = [start, end, m];
+    });
+    if (!mark) return;
+    view.focus();
+    ctx.get(linkTooltipAPI.key).editLink(mark, from, to);
+  });
 }

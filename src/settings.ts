@@ -14,6 +14,7 @@ export const DEFAULTS = {
   autosaveDelay: 400, // ms
   assetsDir: "assets",
   linkOpen: "cmd" as "cmd" | "click",
+  linkPreview: true, // fetch page title and favicon for the link hover card
   autoUpdate: true,
   askedDefault: false, // first-launch "make default editor?" prompt shown
 

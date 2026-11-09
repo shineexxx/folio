@@ -6,7 +6,8 @@ import { ask, message, save } from "@tauri-apps/plugin-dialog";
 
 import "@milkdown/crepe/theme/common/style.css";
 import "./styles.css";
-import { buildEditor, splitFile } from "./editor";
+import { buildEditor, editLinkAt, splitFile } from "./editor";
+import { setupLinkCard } from "./link-card";
 import {
   EDITOR_KEYS,
   applySettings,
@@ -214,16 +215,27 @@ sourceEl.addEventListener("input", () => {
   scheduleSave();
 });
 
-// ---------- links: Cmd+click opens ----------
+// ---------- links: hover card, Cmd+click ----------
+
+function openHref(href: string) {
+  if (/^(https?:|mailto:)/i.test(href)) invoke("open_external", { target: href, reveal: false });
+  else if (filePath && href && !href.startsWith("#") && !isExternal(href.replace(/^[a-z]:/i, "")))
+    invoke("open_external", { target: resolvePath(dirOf(filePath), decodeURI(href.split("#")[0])), reveal: false });
+}
+
+setupLinkCard({
+  root: editorEl,
+  strings: () => T,
+  fetchPreviews: () => settings.linkPreview,
+  open: openHref,
+  edit: (a) => editLinkAt(crepe, a),
+});
 
 editorEl.addEventListener("click", (e) => {
   const a = (e.target as HTMLElement).closest("a");
   if (!a || (settings.linkOpen === "cmd" && !(e.metaKey || e.ctrlKey))) return;
   e.preventDefault();
-  const href = a.getAttribute("href") ?? "";
-  if (isExternal(href)) invoke("open_external", { target: href, reveal: false });
-  else if (filePath && href && !href.startsWith("#"))
-    invoke("open_external", { target: resolvePath(dirOf(filePath), decodeURI(href.split("#")[0])), reveal: false });
+  openHref(a.getAttribute("href") ?? "");
 });
 
 // ---------- settings ----------

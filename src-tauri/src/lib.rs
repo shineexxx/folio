@@ -11,6 +11,7 @@ use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_opener::OpenerExt;
 
 mod default_app;
+mod link_preview;
 mod menu;
 mod settings;
 mod updater;
@@ -342,7 +343,8 @@ pub fn run() {
             settings::set_settings,
             settings::list_fonts,
             default_app::is_default_markdown_app,
-            default_app::set_default_markdown_app
+            default_app::set_default_markdown_app,
+            link_preview::link_preview
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
